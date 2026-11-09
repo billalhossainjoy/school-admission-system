@@ -1,0 +1,40 @@
+
+# .NET build outputs
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Test results and coverage
+TestResults/
+**/TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.*.local.json
+
+# Local development certificates
+*.pfx
+*.p12
+*.key
+*.pem
+
+# Logs and temporary files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
