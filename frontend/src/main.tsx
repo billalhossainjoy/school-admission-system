@@ -4,6 +4,7 @@ import './index.css'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 
 import { routeTree } from "./routeTree.gen";
+import { AppProviders } from './providers/AppProviders';
 
 const router = createRouter({
   routeTree
@@ -16,7 +17,9 @@ declare module "@tanstack/react-router" {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <RouterProvider router={router} />
+  <StrictMode>  
+      <AppProviders>
+      <RouterProvider router={router} />
+    </AppProviders>
   </StrictMode>,
 )
