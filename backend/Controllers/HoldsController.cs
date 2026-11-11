@@ -295,5 +295,32 @@ public class HoldsController(
             studentId.All(c => c is >= '0' and <= '9');
     }
 
-    
+    [HttpGet("/me/holds")]
+public async Task<IActionResult> GetMyHolds(
+    [FromHeader(Name = "X-Student-Id")] string? studentId)
+{
+    if (!IsValidStudentId(studentId))
+    {
+        return BadRequest(new
+        {
+            error = "Student ID must contain exactly 17 digits."
+        });
+    }
+
+    var holds = await db.Holds
+        .AsNoTracking()
+        .Where(h => h.StudentId == studentId)
+        .OrderByDescending(h => h.CreatedAt)
+        .Select(h => new
+        {
+            holdId = h.Id,
+            classId = h.ClassId,
+            className = h.AdmissionClass.Name,
+            status = h.Status,
+            expiresAt = h.ExpiresAt
+        })
+        .ToListAsync();
+
+    return Ok(holds);
+}
 }

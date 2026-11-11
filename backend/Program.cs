@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolAdmission.Api.Data;
+using SchoolAdmission.Api.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
+builder.Services.AddHostedService<HoldExpirationWorker>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
@@ -24,4 +26,4 @@ using (var scope = app.Services.CreateScope())
 app.MapHealthChecks("/health");
 app.MapControllers();
 
-app.Run();
+app.Run(); 
