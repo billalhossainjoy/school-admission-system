@@ -28,3 +28,19 @@ export async function getHold(holdId: string, signal?: AbortSignal): Promise<Adm
   if (!response.ok) throw await readError(response);
   return response.json() as Promise<AdmissionHold>;
 }
+
+export async function confirmHold(holdId: string, studentId: string): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}/holds/${encodeURIComponent(holdId)}/confirm`, {
+    method: "POST",
+    headers: { "X-Student-Id": studentId },
+  });
+  if (!response.ok) throw await readError(response);
+}
+
+export async function cancelHold(holdId: string, studentId: string): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}/holds/${encodeURIComponent(holdId)}`, {
+    method: "DELETE",
+    headers: { "X-Student-Id": studentId },
+  });
+  if (!response.ok) throw await readError(response);
+}

@@ -186,6 +186,19 @@ a { color: inherit; text-decoration: none; }
 .hold-next h2 { margin: 0 0 4px; font-size: 17px; }
 .hold-next > p { min-height: 36px; margin: 0 0 12px; color: var(--body); font-size: 12px; }
 .hold-primary-action { min-height: 46px; display: grid; place-items: center; border-radius: 8px; color: white; background: var(--primary); font-size: 13px; font-weight: 600; }
+.hold-next button.hold-primary-action { width: 100%; border: 0; }
+.hold-primary-action:disabled { opacity: .55; }
+.hold-secondary-action { width: 100%; min-height: 46px; margin-top: 9px; border: 1px solid var(--border); border-radius: 8px; color: var(--primary); background: white; font-size: 13px; font-weight: 600; }
+.hold-id-entry { margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.hold-id-entry label { color: var(--body); font-size: 11px; }
+.hold-id-entry input { height: 40px; padding: 0 10px; border: 1px solid var(--border); border-radius: 7px; color: var(--foreground); background: white; font-size: 13px; }
+.hold-action-error { min-height: 0 !important; margin: 0 0 10px !important; color: #b63640 !important; }
+.cancel-prompt { margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.cancel-prompt p { margin: 0 0 9px; color: var(--body); font-size: 12px; }
+.cancel-prompt > div { display: flex; gap: 8px; }
+.cancel-prompt button { flex: 1; min-height: 35px; border: 1px solid var(--border); border-radius: 6px; color: var(--body); background: white; font-size: 11px; }
+.cancel-prompt button:last-child { border-color: #efc9ca; color: #b63640; background: #fff5f5; }
+.hold-outcome-icon { width: 54px; height: 54px; margin: 30px auto 35px; display: grid; place-items: center; border-radius: 50%; color: var(--primary); background: var(--secondary); font-size: 30px; }
 .hold-action-note { margin-top: 13px; }
 .hold-action-note strong { color: var(--primary); font-size: 10px; }
 .hold-action-note p { margin: 3px 0 0; color: var(--subtle); font-size: 11px; }
