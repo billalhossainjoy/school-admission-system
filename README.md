@@ -27,14 +27,15 @@ From the repository root:
 docker compose up --build
 ```
 
-Current backend health endpoint: http://localhost:8080/health
+Open the frontend at http://localhost:3000. Backend health endpoint:
+http://localhost:8080/health.
 
-The frontend currently runs separately during development:
+For frontend development outside Docker:
 
 ```bash
 cd frontend
-npm install
-npm run dev
+corepack pnpm install
+corepack pnpm dev
 ```
 
 Open the URL printed by Vite. `frontend/.env` sets the backend URL, and Vite
@@ -113,6 +114,6 @@ See [ASSUMPTIONS.md](ASSUMPTIONS.md) for documented design decisions.
 
 ```bash
 cd frontend
-npm run build
-npm run lint
+corepack pnpm build
+corepack pnpm lint
 ```
