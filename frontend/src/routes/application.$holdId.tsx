@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { getClasses } from "../lib/classes";
-import { cancelHold, confirmHold, getHold, type AdmissionHold } from "../lib/holds";
-import schoolBookSymbol from "../assets/figma/school-book-symbol.svg";
+import { getClasses } from "../features/classes/api";
+import { cancelHold, confirmHold, getHold, type AdmissionHold } from "../features/applications/api";
+import { SiteHeader } from "../components/layout/SiteHeader";
+import { Breadcrumb } from "../components/layout/Breadcrumb";
+import { InformationNote } from "../components/ui/InformationNote";
+import { saveStudentId } from "../features/applications/student-identity";
 
 export const Route = createFileRoute("/application/$holdId")({ component: HoldPage });
 
@@ -63,26 +66,18 @@ function HoldPage() {
   function updateStudentId(value: string) {
     const cleaned = value.replace(/\D/g, "").slice(0, 17);
     setStudentId(cleaned);
-    if (cleaned.length === 17) sessionStorage.setItem(`admission:student:${holdId}`, cleaned);
+    if (cleaned.length === 17) {
+      sessionStorage.setItem(`admission:student:${holdId}`, cleaned);
+      saveStudentId(cleaned);
+    }
   }
 
   return (
     <div className="admissions-page">
-      <header className="site-navigation">
-        <div className="navigation-inner">
-          <Link className="school-brand" to="/" aria-label="School Admissions home">
-            <span className="school-logo" aria-hidden="true"><img src={schoolBookSymbol} alt="" width="22" height="22" /></span>
-            <span className="brand-copy"><strong>School Admissions</strong><small>First come, first served</small></span>
-          </Link>
-          <nav className="primary-navigation" aria-label="Primary navigation">
-            <Link to="/">Explore classes</Link><span className="active">My application</span><span aria-disabled="true">Admin portal</span>
-          </nav>
-          <div className={`student-id-status${studentIdValid ? " student-id-active" : ""}`}>{studentIdValid ? "Student ID entered" : "Student ID not entered"}</div>
-        </div>
-      </header>
+      <SiteHeader activePage="applications" studentIdEntered={studentIdValid} />
 
       <main className="hold-content">
-        <nav className="hold-breadcrumb" aria-label="Breadcrumb"><Link to="/">Explore classes</Link><span>/</span><span>{className}</span><span>/</span><strong>My application</strong></nav>
+        <Breadcrumb items={[className, "My application"]} />
         {holdQuery.isPending ? <div className="class-state-card" role="status">Loading reservation…</div> : holdQuery.isError ? (
           <div className="class-state-card error-state" role="alert"><p>{holdQuery.error.message}</p><Link to="/">Explore classes</Link></div>
         ) : hold ? (
@@ -115,7 +110,7 @@ function HoldPage() {
                 )}
               </aside>
             </div>
-            <aside className="information-note"><span className="information-icon" aria-hidden="true">i</span><p>Your application reference is {hold.holdId}. Keep it to find this reservation again.</p></aside>
+            <InformationNote>Your application reference is {hold.holdId}. Keep it to find this reservation again.</InformationNote>
           </>
         ) : null}
       </main>

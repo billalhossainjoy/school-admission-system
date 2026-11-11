@@ -2,52 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { X } from "lucide-react";
-import { getClasses, type AdmissionClass } from "../lib/classes";
-import { createHold } from "../lib/holds";
+import { getClasses, type AdmissionClass } from "../features/classes/api";
+import { createHold } from "../features/applications/api";
+import { getSavedStudentId, saveStudentId } from "../features/applications/student-identity";
+import { getSeatMetrics } from "../features/classes/class-display";
+import { ClassCard } from "../features/classes/ClassCard";
+import { ClassDetailsDialog } from "../features/classes/ClassDetailsDialog";
 
-import schoolBookSymbol from "../assets/figma/school-book-symbol.svg";
-import confirmedDot from "../assets/figma/seat-dot-blue.svg";
-import heldDot from "../assets/figma/seat-dot-orange.svg";
-import availableDot from "../assets/figma/seat-dot-green.svg";
+import { SiteHeader } from "../components/layout/SiteHeader";
+import { InformationNote } from "../components/ui/InformationNote";
 
 export const Route = createFileRoute("/")({ component: ClassDiscoveryPage });
-
-function getClassDisplay(name: string) {
-  const [title, shiftName] = name.split(/\s+[·•–—-]\s+/, 2);
-  const gradeNumber = title.match(/\b(\d+)\b/)?.[1];
-
-  return {
-    title,
-    shift: shiftName
-      ? /shift$/i.test(shiftName)
-        ? shiftName
-        : `${shiftName} shift`
-      : "",
-    gradeMark: gradeNumber ? gradeNumber.padStart(2, "0") : title.slice(0, 2).toUpperCase(),
-  };
-}
-
-function getSeatMetrics(admissionClass: AdmissionClass) {
-  const total = Math.max(0, admissionClass.totalSeats);
-  const confirmed = Math.max(0, admissionClass.confirmedSeats);
-  const held = Math.max(0, admissionClass.heldSeats);
-  const available = Math.max(0, admissionClass.availableSeats);
-  const occupiedPercent = total > 0
-    ? Math.min(100, Math.round(((confirmed + held) / total) * 100))
-    : 0;
-
-  return {
-    total,
-    confirmed,
-    held,
-    available,
-    occupiedPercent,
-    confirmedPercent: total > 0 ? Math.min(100, (confirmed / total) * 100) : 0,
-    heldPercent: total > 0 ? Math.min(100, (held / total) * 100) : 0,
-    full: available === 0,
-  };
-}
 
 function ClassDiscoveryPage() {
   const navigate = useNavigate();
@@ -56,6 +21,7 @@ function ClassDiscoveryPage() {
     mutationFn: ({ classId, studentId }: { classId: string; studentId: string }) => createHold(classId, studentId),
     onSuccess: (hold, variables) => {
       sessionStorage.setItem(`admission:student:${hold.holdId}`, variables.studentId);
+      saveStudentId(variables.studentId);
       void queryClient.invalidateQueries({ queryKey: ["classes"] });
       void navigate({ to: "/application/$holdId", params: { holdId: hold.holdId } });
     },
@@ -66,7 +32,7 @@ function ClassDiscoveryPage() {
     refetchInterval: 15_000,
   });
   const classes = classesQuery.data ?? [];
-  const [studentId, setStudentId] = useState("");
+  const [studentId, setStudentId] = useState(getSavedStudentId);
   const [detailsClass, setDetailsClass] = useState<AdmissionClass | null>(null);
   const studentIdInput = useRef<HTMLInputElement>(null);
   const hasValidStudentId = /^\d{17}$/.test(studentId);
@@ -76,7 +42,9 @@ function ClassDiscoveryPage() {
   );
 
   function updateStudentId(value: string) {
-    setStudentId(value.replace(/\D/g, "").slice(0, 17));
+    const cleaned = value.replace(/\D/g, "").slice(0, 17);
+    setStudentId(cleaned);
+    saveStudentId(cleaned);
   }
 
   function chooseClass(admissionClass: AdmissionClass) {
@@ -90,29 +58,7 @@ function ClassDiscoveryPage() {
 
   return (
     <div className="admissions-page">
-      <header className="site-navigation">
-        <div className="navigation-inner">
-          <a className="school-brand" href="#top" aria-label="School Admissions home">
-            <span className="school-logo" aria-hidden="true">
-              <img src={schoolBookSymbol} alt="" width="22" height="22" />
-            </span>
-            <span className="brand-copy">
-              <strong>School Admissions</strong>
-              <small>First come, first served</small>
-            </span>
-          </a>
-
-          <nav className="primary-navigation" aria-label="Primary navigation">
-            <a className="active" href="#classes">Explore classes</a>
-            <span aria-disabled="true">My applications</span>
-            <span aria-disabled="true">Admin portal</span>
-          </nav>
-
-          <div className="student-id-status" aria-live="polite">
-            {hasValidStudentId ? "Student ID entered" : "Student ID not entered"}
-          </div>
-        </div>
-      </header>
+      <SiteHeader activePage="classes" studentIdEntered={hasValidStudentId} />
 
       <main id="top" className="discovery-content">
         <section className="page-introduction" aria-labelledby="page-title">
@@ -181,7 +127,6 @@ function ClassDiscoveryPage() {
                 <ClassCard
                   key={item.id}
                   admissionClass={item}
-                  selected={false}
                   hasValidStudentId={hasValidStudentId}
                   isCreatingHold={holdMutation.isPending}
                   onViewDetails={() => setDetailsClass(item)}
@@ -192,118 +137,10 @@ function ClassDiscoveryPage() {
           )}
         </section>
 
-        <aside className="information-note">
-          <span className="information-icon" aria-hidden="true">i</span>
-          <p>Holding a seat is temporary. Admission is confirmed only after completing the fee step.</p>
-        </aside>
+        <InformationNote>Holding a seat is temporary. Admission is confirmed only after completing the fee step.</InformationNote>
       </main>
 
-      {detailsClass && (
-        <div
-          className="dialog-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setDetailsClass(null);
-          }}
-        >
-          <section className="class-details-dialog" role="dialog" aria-modal="true" aria-labelledby="details-title">
-            <button className="dialog-close" type="button" aria-label="Close class details" onClick={() => setDetailsClass(null)}>
-              <X size={18} />
-            </button>
-            <p className="eyebrow">CLASS &amp; SHIFT DETAILS</p>
-            <h2 id="details-title">{getClassDisplay(detailsClass.name).title}</h2>
-            {getClassDisplay(detailsClass.name).shift && <p className="dialog-shift">{getClassDisplay(detailsClass.name).shift}</p>}
-            <SeatBreakdown admissionClass={detailsClass} />
-            <button className="dialog-done" type="button" onClick={() => setDetailsClass(null)}>Done</button>
-          </section>
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface ClassCardProps {
-  admissionClass: AdmissionClass;
-  selected: boolean;
-  hasValidStudentId: boolean;
-  isCreatingHold: boolean;
-  onViewDetails: () => void;
-  onChoose: () => void;
-}
-
-function ClassCard({ admissionClass, selected, hasValidStudentId, isCreatingHold, onViewDetails, onChoose }: ClassCardProps) {
-  const display = getClassDisplay(admissionClass.name);
-  const metrics = getSeatMetrics(admissionClass);
-  const status = metrics.full ? "Full" : selected ? "Selected" : "Available";
-
-  return (
-    <article className={`class-card${metrics.full ? " class-card-full" : ""}${selected ? " class-card-selected" : ""}`}>
-      <div className="class-card-header">
-        <span className="grade-emblem">{display.gradeMark}</span>
-        <div className="class-name-block">
-          <h3>{display.title}</h3>
-          {display.shift && <p>{display.shift}</p>}
-        </div>
-        <span className={`availability-badge${metrics.full ? " full" : selected ? " selected" : ""}`}>
-          {status}
-        </span>
-      </div>
-
-      <div className="card-divider" />
-
-      <div className="seat-summary">
-        <div className="seat-summary-item vacancy-summary">
-          <strong>{metrics.available}</strong>
-          <span>Seats available</span>
-        </div>
-        <div className="seat-summary-item capacity-summary">
-          <strong>{metrics.total}</strong>
-          <span>Total seats</span>
-        </div>
-      </div>
-
-      <div className="allocation-label">
-        <span>Seat allocation</span>
-        <strong>{metrics.occupiedPercent}% occupied</strong>
-      </div>
-      <div
-        className="allocation-bar"
-        role="img"
-        aria-label={`${metrics.confirmed} confirmed, ${metrics.held} held, ${metrics.available} available`}
-      >
-        <span className="confirmed-segment" style={{ width: `${metrics.confirmedPercent}%` }} />
-        <span className="held-segment" style={{ width: `${metrics.heldPercent}%` }} />
-      </div>
-
-      <div className="seat-legend" aria-label="Seat counts">
-        <span><img src={confirmedDot} alt="" width="7" height="7" />{metrics.confirmed} confirmed</span>
-        <span><img src={heldDot} alt="" width="7" height="7" />{metrics.held} held</span>
-        <span><img src={availableDot} alt="" width="7" height="7" />{metrics.available} free</span>
-      </div>
-
-      <div className="card-actions">
-        <button type="button" className="view-details-button" onClick={onViewDetails}>View details</button>
-        <button
-          type="button"
-          className={`apply-button${metrics.full || !hasValidStudentId ? " disabled" : ""}`}
-          disabled={metrics.full || !hasValidStudentId || isCreatingHold}
-          onClick={onChoose}
-        >
-          {metrics.full ? "Seats full" : isCreatingHold ? "Reserving…" : hasValidStudentId ? "Hold seat" : "Enter ID to apply"}
-        </button>
-      </div>
-    </article>
-  );
-}
-
-function SeatBreakdown({ admissionClass }: { admissionClass: AdmissionClass }) {
-  const metrics = getSeatMetrics(admissionClass);
-  return (
-    <div className="dialog-seat-breakdown">
-      <div><strong>{metrics.available}</strong><span>Seats available</span></div>
-      <div><strong>{metrics.total}</strong><span>Total seats</span></div>
-      <div><strong>{metrics.confirmed}</strong><span>Confirmed</span></div>
-      <div><strong>{metrics.held}</strong><span>On hold</span></div>
+      {detailsClass && <ClassDetailsDialog admissionClass={detailsClass} onClose={() => setDetailsClass(null)} />}
     </div>
   );
 }

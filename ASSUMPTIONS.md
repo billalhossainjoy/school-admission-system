@@ -46,6 +46,7 @@ interpretation. It also documents behavior currently relied on by the backend.
    seat allocation for a class and prevents concurrent requests from
    overbooking it.
 
-These decisions describe the current backend behavior. Authentication,
-background expiration processing, and the React frontend remain outside the
-current implementation scope.
+10. **Browser recovery:** The last valid student ID is stored in browser local
+    storage so a parent can reopen the application history after closing the
+    browser. Hold-specific IDs remain in session storage. The assignment has no
+    login flow, so anyone with the student ID can view that student's records.

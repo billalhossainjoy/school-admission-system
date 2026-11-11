@@ -1,4 +1,4 @@
-import { env } from "../config/env";
+import { env } from "../../config/env";
 
 const apiBaseUrl = import.meta.env.DEV ? "/api" : env.VITE_API_BASE_URL.replace(/\/$/, "");
 
@@ -7,6 +7,19 @@ export interface AdmissionHold {
   classId: string;
   status: string;
   expiresAt: string;
+}
+
+export interface StudentApplication extends AdmissionHold {
+  className: string;
+}
+
+export async function getMyApplications(studentId: string, signal?: AbortSignal): Promise<StudentApplication[]> {
+  const response = await fetch(`${apiBaseUrl}/me/holds`, {
+    headers: { "X-Student-Id": studentId },
+    signal,
+  });
+  if (!response.ok) throw await readError(response);
+  return response.json() as Promise<StudentApplication[]>;
 }
 
 async function readError(response: Response): Promise<Error> {

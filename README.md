@@ -1,7 +1,6 @@
 # School Admission System
 
-Take-home assignment built with ASP.NET Core 10, PostgreSQL, and React (frontend
-planned).
+Take-home assignment built with ASP.NET Core 10, PostgreSQL, and React.
 
 ## Project status
 
@@ -15,7 +14,9 @@ The backend currently provides:
 - PostgreSQL transactions and row-level class locking for seat allocation
 - EF Core migrations and integration tests backed by Testcontainers
 
-The React frontend is not available yet.
+The React frontend includes class discovery, seat holds, confirmation,
+cancellation, and student application history. The school admin screen is still
+in progress.
 
 ## Run with Docker
 
@@ -28,6 +29,17 @@ docker compose up --build
 ```
 
 Current backend health endpoint: http://localhost:8080/health
+
+The frontend currently runs separately during development:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open the URL printed by Vite. `frontend/.env` sets the backend URL, and Vite
+proxies API requests to it during development.
 
 To stop the application:
 
@@ -97,3 +109,11 @@ and removes the container after the test run. No local PostgreSQL installation
 or test database configuration is required.
 
 See [ASSUMPTIONS.md](ASSUMPTIONS.md) for documented design decisions.
+
+## Frontend checks
+
+```bash
+cd frontend
+npm run build
+npm run lint
+```
