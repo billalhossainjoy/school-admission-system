@@ -1,9 +1,9 @@
 # AI usage
 
-Codex assisted with the React frontend, including translating the supplied
-Figma screens into components, wiring the existing API, and reviewing the
-assignment requirements. The backend was already present when this frontend
-work started.
+Codex assisted with the React frontend: translating the supplied Figma screens
+into components, wiring the existing API, building the admin class form, and
+reviewing the assignment requirements. The backend was already present when
+this frontend work started.
 
 The first frontend pass kept the student ID only in session storage. Reviewing
 the assignment exposed that browser restart recovery was required, so the

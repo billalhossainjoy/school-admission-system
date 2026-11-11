@@ -15,8 +15,7 @@ The backend currently provides:
 - EF Core migrations and integration tests backed by Testcontainers
 
 The React frontend includes class discovery, seat holds, confirmation,
-cancellation, and student application history. The school admin screen is still
-in progress.
+cancellation, student application history, and school admin class creation.
 
 ## Run with Docker
 

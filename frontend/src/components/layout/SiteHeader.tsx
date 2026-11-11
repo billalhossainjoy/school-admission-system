@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import schoolBookSymbol from "../../assets/figma/school-book-symbol.svg";
 
 interface SiteHeaderProps {
-  activePage: "classes" | "applications";
+  activePage: "classes" | "applications" | "admin";
   studentIdEntered: boolean;
 }
 
@@ -17,10 +17,10 @@ export function SiteHeader({ activePage, studentIdEntered }: SiteHeaderProps) {
         <nav className="primary-navigation" aria-label="Primary navigation">
           <Link className={activePage === "classes" ? "active" : ""} to="/">Explore classes</Link>
           <Link className={activePage === "applications" ? "active" : ""} to="/applications">My applications</Link>
-          <span aria-disabled="true">Admin portal</span>
+          <Link className={activePage === "admin" ? "active" : ""} to="/admin">Admin portal</Link>
         </nav>
-        <div className={`student-id-status${studentIdEntered ? " student-id-active" : ""}`} aria-live="polite">
-          {studentIdEntered ? "Student ID entered" : "Student ID not entered"}
+        <div className={`student-id-status${activePage === "admin" ? " admin-context" : studentIdEntered ? " student-id-active" : ""}`} aria-live="polite">
+          {activePage === "admin" ? "School administration" : studentIdEntered ? "Student ID entered" : "Student ID not entered"}
         </div>
       </div>
     </header>
