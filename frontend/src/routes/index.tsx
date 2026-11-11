@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { X } from "lucide-react";
 import { getClasses, type AdmissionClass } from "../lib/classes";
+import { createHold } from "../lib/holds";
 
 import schoolBookSymbol from "../assets/figma/school-book-symbol.svg";
 import confirmedDot from "../assets/figma/seat-dot-blue.svg";
@@ -48,6 +50,16 @@ function getSeatMetrics(admissionClass: AdmissionClass) {
 }
 
 function ClassDiscoveryPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const holdMutation = useMutation({
+    mutationFn: ({ classId, studentId }: { classId: string; studentId: string }) => createHold(classId, studentId),
+    onSuccess: (hold, variables) => {
+      sessionStorage.setItem(`admission:student:${hold.holdId}`, variables.studentId);
+      void queryClient.invalidateQueries({ queryKey: ["classes"] });
+      void navigate({ to: "/application/$holdId", params: { holdId: hold.holdId } });
+    },
+  });
   const classesQuery = useQuery({
     queryKey: ["classes"],
     queryFn: ({ signal }) => getClasses(signal),
@@ -55,7 +67,6 @@ function ClassDiscoveryPage() {
   });
   const classes = classesQuery.data ?? [];
   const [studentId, setStudentId] = useState("");
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [detailsClass, setDetailsClass] = useState<AdmissionClass | null>(null);
   const studentIdInput = useRef<HTMLInputElement>(null);
   const hasValidStudentId = /^\d{17}$/.test(studentId);
@@ -74,7 +85,7 @@ function ClassDiscoveryPage() {
       return;
     }
     if (getSeatMetrics(admissionClass).full) return;
-    setSelectedClassId(admissionClass.id);
+    holdMutation.mutate({ classId: admissionClass.id, studentId });
   }
 
   return (
@@ -152,6 +163,7 @@ function ClassDiscoveryPage() {
             <span className="live-badge"><i aria-hidden="true" /> Live seat updates</span>
           </div>
 
+          {holdMutation.isError && <div className="hold-error" role="alert">{holdMutation.error.message}</div>}
           {classesQuery.isPending ? (
             <div className="class-state-card" role="status">Loading current seat availability…</div>
           ) : classesQuery.isError ? (
@@ -169,8 +181,9 @@ function ClassDiscoveryPage() {
                 <ClassCard
                   key={item.id}
                   admissionClass={item}
-                  selected={selectedClassId === item.id}
+                  selected={false}
                   hasValidStudentId={hasValidStudentId}
+                  isCreatingHold={holdMutation.isPending}
                   onViewDetails={() => setDetailsClass(item)}
                   onChoose={() => chooseClass(item)}
                 />
@@ -213,11 +226,12 @@ interface ClassCardProps {
   admissionClass: AdmissionClass;
   selected: boolean;
   hasValidStudentId: boolean;
+  isCreatingHold: boolean;
   onViewDetails: () => void;
   onChoose: () => void;
 }
 
-function ClassCard({ admissionClass, selected, hasValidStudentId, onViewDetails, onChoose }: ClassCardProps) {
+function ClassCard({ admissionClass, selected, hasValidStudentId, isCreatingHold, onViewDetails, onChoose }: ClassCardProps) {
   const display = getClassDisplay(admissionClass.name);
   const metrics = getSeatMetrics(admissionClass);
   const status = metrics.full ? "Full" : selected ? "Selected" : "Available";
@@ -272,10 +286,10 @@ function ClassCard({ admissionClass, selected, hasValidStudentId, onViewDetails,
         <button
           type="button"
           className={`apply-button${metrics.full || !hasValidStudentId ? " disabled" : ""}`}
-          disabled={metrics.full || !hasValidStudentId}
+          disabled={metrics.full || !hasValidStudentId || isCreatingHold}
           onClick={onChoose}
         >
-          {metrics.full ? "Seats full" : selected ? "Selected" : hasValidStudentId ? "Select class" : "Enter ID to apply"}
+          {metrics.full ? "Seats full" : isCreatingHold ? "Reserving…" : hasValidStudentId ? "Hold seat" : "Enter ID to apply"}
         </button>
       </div>
     </article>
